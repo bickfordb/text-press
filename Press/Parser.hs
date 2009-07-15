@@ -3,7 +3,7 @@ module Press.Parser where
 import Data.Char (isSpace)
 import Data.Either (Either(..))
 import Data.Map (fromList, Map, lookup, insert)
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, listToMaybe)
 import Prelude hiding (lookup)
 
 import qualified Text.Parsec as Parsec
@@ -16,6 +16,7 @@ import Text.Parsec.Prim ((<|>), try, Parsec, getPosition, getState)
 import qualified Text.Parsec.Prim as Parsec.Prim
 
 import Press.Types
+import Press.Render 
 
 skipMany p = scan
     where scan = (p >> scan) <|> return ()
@@ -128,7 +129,7 @@ blockTag name rest = do
     nodes <- fmap catMaybes $ manyTill pNode (tagNamed "endblock")
     Parsec.Prim.modifyState $ \(parser, tmpl) -> (parser,
         tmpl {tmplBlocks = insert blockName nodes (tmplBlocks tmpl)})
-    return $ Just $ Text blockName
+    return $ Just $ Tag "block" $ TagFunc $ showBlock blockName
 
 defaultTypes = (fromList [
     ("extends", TagType extendsTag), 
@@ -155,5 +156,4 @@ runParseTagExpressions input = runSubParser parseTagExpressions () input
           pStr = fmap ExprStr $ between "\"" "\""
           pVar = fmap ExprVar $ identifier
 
--- Get a new, empty Parser instance
 newParser = Parser defaultTypes  [] 

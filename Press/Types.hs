@@ -1,17 +1,23 @@
 module Press.Types where 
 
+import Control.Monad.State (StateT)
 import Data.Map (Map, lookup, fromList)
 import qualified Text.Parsec.Prim as Prim
 import Text.Parsec.Pos (SourcePos)
+import Text.JSON (JSValue)
 
-data TagFunc = TagFunc (String -> [Node] -> IO String)
+data RenderContext = RenderContext {
+    renderContextTemplateCache :: Map TemplatePath Template,
+    renderContextTemplateStack :: [Template],
+    renderContextValues :: [Map String JSValue]
+}
+    
+type RenderT = RenderContext -> IO String
+
+data TagFunc = TagFunc (RenderContext -> IO String)
 
 data Node = Var String
-    | Tag {
-        tagName :: String,
-        tagFunc :: TagFunc,
-        tagChildren :: [Node]
-        }
+    | Tag TagName TagFunc
     | Text String
     deriving (Show)
 
@@ -55,4 +61,6 @@ data Parser = Parser {
     parserSearchPaths :: [String]
 } deriving (Show)
 
+class Render a where
+    render :: RenderContext -> a -> IO String
 
