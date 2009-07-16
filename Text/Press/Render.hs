@@ -6,6 +6,7 @@ import Data.Maybe (listToMaybe, catMaybes)
 import Prelude hiding (lookup)
 
 import Text.JSON.Types 
+import Text.JSON
 
 import Text.Press.Types
 
@@ -15,7 +16,7 @@ instance Render Node where
         context <- get
         case lookupVar var context of
             Nothing -> return ""
-            Just jsval -> return $ show jsval
+            Just jsval -> return $ (showJSValue jsval) ""
     render (Tag _ f) = render f 
 
 instance Render TagFunc where

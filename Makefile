@@ -1,10 +1,10 @@
 
 all: parsetest runtest
 
-parsetest: ParseTest.hs Text
+parsetest: ParseTest.hs Text/Press
 	ghc --make ParseTest.hs -o parsetest 
 
-runtest: RunTest.hs Text
+runtest: RunTest.hs Text/Press
 	ghc --make RunTest.hs -o runtest
 
 test: parsetest runtest

@@ -11,5 +11,5 @@ data Foo = Foo {hi :: String}
 
 main = do 
     s <- run [Foo {hi="there"}] "example4.html"
-    print s
+    putStrLn s
 
