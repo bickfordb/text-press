@@ -112,30 +112,6 @@ strip = f . f
 
 handleParsecError e = error (show e)
 
-extendsTag name rest = do
-    exprs <- runParseTagExpressions rest
-    include <- case exprs of 
-                (ExprStr s : xs) -> return s
-                otherwise -> fail "expecting a string"
-    let rest' = Just . strip $ include
-    Parsec.Prim.modifyState $ \(parser, tmpl) -> (parser, tmpl {tmplExtends = rest'})
-    return $ Nothing
-
-blockTag name rest = do
-    exprs <- runParseTagExpressions rest
-    blockName <- case exprs of 
-        (ExprVar var : xs) -> return var
-        otherwise -> Parsec.Prim.unexpected (show otherwise)
-    nodes <- fmap catMaybes $ manyTill pNode (tagNamed "endblock")
-    Parsec.Prim.modifyState $ \(parser, tmpl) -> (parser,
-        tmpl {tmplBlocks = insert blockName nodes (tmplBlocks tmpl)})
-    return $ Just $ Tag "block" $ TagFunc $ showBlock blockName
-
-defaultTypes = (fromList [
-    ("extends", TagType extendsTag), 
-    ("block", TagType blockTag)
-    ])
-
 failWithParseError :: (Parsec.Prim.Stream s m t) => Parsec.Error.ParseError -> Parsec.Prim.ParsecT s u m a
 failWithParseError parseError = Parsec.Prim.ParsecT $ 
     \s -> return $ Parsec.Prim.Empty $ return $ Parsec.Prim.Error parseError
@@ -156,4 +132,4 @@ runParseTagExpressions input = runSubParser parseTagExpressions () input
           pStr = fmap ExprStr $ between "\"" "\""
           pVar = fmap ExprVar $ identifier
 
-newParser = Parser defaultTypes  [] 
+

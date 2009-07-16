@@ -6,15 +6,15 @@ import qualified Text.Parsec.Prim as Prim
 import Text.Parsec.Pos (SourcePos)
 import Text.JSON (JSValue)
 
-data RenderContext = RenderContext {
-    renderContextTemplateCache :: Map TemplatePath Template,
-    renderContextTemplateStack :: [Template],
-    renderContextValues :: [Map String JSValue]
+data RenderState = RenderState {
+    renderStateParser :: Parser,
+    renderStateTemplate :: Template,
+    renderStateValues :: [JSValue]
 }
-    
-type RenderT = RenderContext -> IO String
 
-data TagFunc = TagFunc (RenderContext -> IO String)
+type RenderT = StateT RenderState IO
+
+data TagFunc = TagFunc (RenderT String)
 
 data Node = Var String
     | Tag TagName TagFunc
@@ -58,9 +58,12 @@ data Token = PText String
 
 data Parser = Parser {
     parserTagTypes :: Map TagName TagType,
-    parserSearchPaths :: [String]
+    parserSearchPaths :: [String],
+    parserTemplateCache :: Map TemplatePath Template 
 } deriving (Show)
 
 class Render a where
-    render :: RenderContext -> a -> IO String
+    render :: a -> RenderT String
+
+newParser = Parser (fromList []) [] (fromList [])
 
