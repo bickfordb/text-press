@@ -12,4 +12,5 @@ test: parsetest runtest
 	./runtest
 
 clean:
-	- rm -rf ./main
+	- rm -rf ./runtest ./parsetest
+
