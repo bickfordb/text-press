@@ -1,5 +1,5 @@
 
-module Press.Parser where
+module Text.Press.Parser where
 import Data.Char (isSpace)
 import Data.Either (Either(..))
 import Data.Map (fromList, Map, lookup, insert)
@@ -15,8 +15,8 @@ import Text.Parsec.Pos (SourcePos, sourceName)
 import Text.Parsec.Prim ((<|>), try, Parsec, getPosition, getState)
 import qualified Text.Parsec.Prim as Parsec.Prim
 
-import Press.Types
-import Press.Render 
+import Text.Press.Types
+import Text.Press.Render 
 
 skipMany p = scan
     where scan = (p >> scan) <|> return ()

@@ -1,4 +1,4 @@
-module Press.Render where
+module Text.Press.Render where
 
 import Control.Monad.State
 import Data.Map (Map, lookup, fromList, insert)
@@ -7,7 +7,7 @@ import Prelude hiding (lookup)
 
 import Text.JSON.Types 
 
-import Press.Types
+import Text.Press.Types
 
 instance Render Node where 
     render (Text s) = return s 

@@ -1,4 +1,4 @@
-module Press.Run where
+module Text.Press.Run where
 
 import Control.Monad.State
 import Prelude hiding (lookup)
@@ -8,10 +8,10 @@ import Data.Map (insert, lookup)
 import Text.JSON.Generic (toJSON) 
 import Text.JSON (JSValue)
 
-import Press.Types
-import Press.Parser
-import Press.Render
-import Press.Tags
+import Text.Press.Types
+import Text.Press.Parser
+import Text.Press.Render
+import Text.Press.Tags
 
 run :: Data a => [a] -> TemplatePath -> IO String
 run datas templateName = evalStateT (run' jsonDatas templateName) defaultParser

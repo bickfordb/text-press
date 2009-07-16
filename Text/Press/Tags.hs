@@ -1,13 +1,13 @@
-module Press.Tags where
+module Text.Press.Tags where
 
 import Data.Map (fromList, insert)
 import Data.Maybe (catMaybes)
 import qualified Text.Parsec.Prim as Parsec.Prim
 import Text.Parsec.Combinator (manyTill)
 
-import Press.Parser
-import Press.Render
-import Press.Types
+import Text.Press.Parser
+import Text.Press.Render
+import Text.Press.Types
 
 extendsTag name rest = do
     exprs <- runParseTagExpressions rest

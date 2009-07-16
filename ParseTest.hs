@@ -1,8 +1,8 @@
 module Main where
 
-import Press.Parser 
-import Press.Types 
-import Press.Run
+import Text.Press.Parser 
+import Text.Press.Types 
+import Text.Press.Run
 
 main = do 
     let parser = defaultParser 

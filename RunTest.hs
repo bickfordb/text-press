@@ -4,7 +4,7 @@ module Main where
 import Data.Data
 import Data.Map
 
-import Press.Run
+import Text.Press.Run
 
 data Foo = Foo {hi :: String} 
     deriving (Data, Typeable)

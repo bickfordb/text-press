@@ -1,4 +1,4 @@
-module Press.Types where 
+module Text.Press.Types where 
 
 import Control.Monad.State (StateT)
 import Data.Map (Map, lookup, fromList)
