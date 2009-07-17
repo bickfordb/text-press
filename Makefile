@@ -8,5 +8,5 @@ test: press-test
 	./press-test
 
 clean:
-	- rm -rf ./test 
+	- rm -rf ./press-test
 
