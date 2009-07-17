@@ -1,16 +1,12 @@
 
-all: parsetest runtest
+all: press-test
 
-parsetest: ParseTest.hs Text/Press
-	ghc --make ParseTest.hs -o parsetest 
+press-test: PressTest.hs Text/Press Text
+	ghc --make PressTest -o press-test
 
-runtest: RunTest.hs Text/Press
-	ghc --make RunTest.hs -o runtest
-
-test: parsetest runtest
-	./parsetest
-	./runtest
+test: press-test
+	./press-test
 
 clean:
-	- rm -rf ./runtest ./parsetest
+	- rm -rf ./test 
 

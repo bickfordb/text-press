@@ -63,6 +63,12 @@ parseFile parser filename = do
                 Left err -> Left err
                 Right tokens -> Parsec.Prim.runParser tokensToTemplate (parser, newTemplate) filename tokens
 
+parseString :: Parser -> String -> Either Parsec.ParseError Template
+parseString parser string = do
+    case Parsec.Prim.runParser intermediateParser () "" string of
+        Left err -> Left err
+        Right tokens -> Parsec.Prim.runParser tokensToTemplate (parser, newTemplate) "" tokens
+
 
 tokensToTemplate :: Parsec [(Token, SourcePos)] ParserState Template 
 tokensToTemplate = do 
