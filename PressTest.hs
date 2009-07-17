@@ -11,6 +11,7 @@ import Test.HUnit
 import Text.Press.Parser
 import Text.Press.Run
 import Text.Press.Render
+import Text.JSON (decodeStrict, Result(..))
 
 main = defaultMain tests
 
@@ -30,10 +31,13 @@ tests = [
         , testCase "Parse comment" $ parses "{%comment%}{%endcomment%}"
         , testCase "Parse cycle 1" $ parses "{%cycle row1, row2, row3 as rowcolor%}"
         , testCase "Parse cycle 2" $ parses "{%cycle rowcolors %}"
+        , testCase "Parse variable with filters" $ parses "{{x | strip}}"
         ]
-    , testGroup "Renderer" [testCase "Render a var" testParseEmpty]
+    , testGroup "Renderer" [
+        testCase "Render a var" $ rendersTo "{{x}}" "{\"x\":1}" "1"
+        , testCase "Render a block" $ rendersTo "{% block x %}a{% endblock %}" "{}" "a"
+        ]
     ]
-
 
 testParseEmpty = assertParseFile "test-data/empty.html" >> return ()
 
@@ -46,6 +50,17 @@ assertRight action = do
 
 parses s = assertRight $ return $ parseString defaultParser s
 
- 
+renders_ tmpl json = renders tmpl json >> return ()
 
+renders tmpl json = do
+    case decodeStrict json of 
+        Error e -> error . show $ e
+        Ok a -> runJSONWithBody [a] tmpl 
 
+assertEq left right 
+    | left == right = return ()
+    | otherwise = error $ "expecting " ++ (show left) ++ " == " ++ (show right)
+
+rendersTo tmpl json expected = do 
+    result <- renders tmpl json
+    assertEq expected result

@@ -6,19 +6,23 @@ import Prelude hiding (lookup)
 import Data.Data (Data)
 import Data.Map (insert, lookup)
 import Text.JSON.Generic (toJSON) 
-import Text.JSON (JSValue)
+import Text.JSON (JSValue, decodeStrict)
 
 import Text.Press.Types
 import Text.Press.Parser
 import Text.Press.Render
 import Text.Press.Tags
 
-run :: Data a => [a] -> TemplatePath -> IO String
-run datas templateName = evalStateT (run' jsonDatas templateName) defaultParser
+runDataWithPath :: Data a => [a] -> String -> IO String
+runDataWithPath datas templateName = evalStateT (runJSONWithPath jsonDatas templateName) defaultParser
     where jsonDatas = map toJSON datas
 
-run' :: [JSValue] -> TemplatePath -> StateT Parser IO String
-run' datas templateName = do
+runDataWithBody :: Data a => [a] -> String -> IO String
+runDataWithBody datas body = runJSONWithBody jsonDatas body
+    where jsonDatas = map toJSON datas
+
+runJSONWithPath :: [JSValue] -> String -> StateT Parser IO String
+runJSONWithPath datas templateName = do
     addToTemplateCache templateName
     parser <- get
     template <- fmap head $ lookupTemplates templateName
@@ -29,6 +33,26 @@ run' datas templateName = do
     }
     liftIO $ evalStateT doRender st 
 
+runJSONWithBody :: [JSValue] -> String -> IO String
+runJSONWithBody jsvalues body = do 
+    case parseString defaultParser body of
+        Left err -> error $ show err
+        Right template -> runJSONWithTemplate jsvalues template defaultParser
+
+runJSONWithTemplate :: [JSValue] -> Template -> Parser -> IO String
+runJSONWithTemplate jsvalues template parser = evalStateT (runJSONWithTemplate' jsvalues template) parser
+
+runJSONWithTemplate' jsvalues template = do
+    case tmplExtends template of 
+        Just s -> addToTemplateCache s
+        Nothing -> return ()
+    parser <- get
+    liftIO $ evalStateT doRender $ RenderState {
+        renderStateParser = parser,
+        renderStateTemplate = template,
+        renderStateValues = jsvalues
+    }
+
 lookupTemplates templateName = do
     parser <- get
     case lookup templateName (parserTemplateCache parser) of
@@ -38,6 +62,7 @@ lookupTemplates templateName = do
                 xs <- lookupTemplates s
                 return $ template : xs
         Nothing -> liftIO $ error $ "unexpected uncached template: " ++ (show templateName)
+
 
 addToTemplateCache template = do
     parser <- get
