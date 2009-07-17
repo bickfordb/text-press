@@ -12,5 +12,9 @@ main = do
     print s
     s <- parseFile parser "example.html"
     print s
+    s <- parseFile parser "example4.html"
+    print s
+    s <- parseFile parser "example4-layout.html"
+    print s
     return ()
 

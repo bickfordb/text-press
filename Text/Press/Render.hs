@@ -49,7 +49,7 @@ templateStack = getTemplate >>= templateStack'
             case lookup name cache of
                 Just template -> do
                     templates <- templateStack' template
-                    return $ (template : templates)
+                    return $ t : (template : templates)
                 Nothing -> liftIO $ error $ "expecting a template"
 
 renderJS JSNull = return ""
