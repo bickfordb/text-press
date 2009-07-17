@@ -16,7 +16,7 @@ instance Render Node where
         context <- get
         case lookupVar var context of
             Nothing -> return ""
-            Just jsval -> return $ (showJSValue jsval) ""
+            Just jsval -> renderJS jsval
     render (Tag _ f) = render f 
 
 instance Render TagFunc where
@@ -52,10 +52,11 @@ templateStack = getTemplate >>= templateStack'
                     return $ (template : templates)
                 Nothing -> liftIO $ error $ "expecting a template"
 
+renderJS JSNull = return ""
+renderJS (JSString x) = return $ fromJSString x
+renderJS other = return $ (showJSValue other) ""
+
 doRender = do 
     bodyNodes <- fmap (tmplNodes . last) templateStack
     st <- get
     fmap (foldl (++) "") $ mapM render bodyNodes
-        
-    
-
