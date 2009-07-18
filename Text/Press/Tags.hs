@@ -1,10 +1,15 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Text.Press.Tags where
 import Text.JSON.Types
 
 import Data.Map (fromList, insert)
 import Data.Maybe (catMaybes)
 import qualified Text.Parsec.Prim as Parsec.Prim
-import Text.Parsec.Combinator (manyTill)
+import Text.Parsec.Combinator (manyTill, choice)
+import Control.Monad.Trans (lift, liftIO)
+
+import Text.Press.Parser
 import Control.Monad.Trans (lift, liftIO)
 
 import Text.Press.Parser
@@ -30,6 +35,7 @@ blockTag name rest = do
         tmpl {tmplBlocks = insert blockName nodes (tmplBlocks tmpl)})
     return $ Just $ Tag "block" $ TagFunc $ showBlock blockName
 
+
 defaultTagTypes = (fromList [
     ("extends", TagType extendsTag), 
     ("block", TagType blockTag),
@@ -37,15 +43,38 @@ defaultTagTypes = (fromList [
     ])
 
 ifTag name rest = do
-    exprs <- runParseTagExpressions rest
-    expr <- case exprs of 
-        [] -> Parsec.Prim.unexpected "empty if"
-        (x : []) -> return x
-        (x : xs) -> Parsec.Prim.unexpected $ show . head $ xs
+        expr <- parseIfExpr rest
+        scan [] expr
+    where
+        scan ifs e = do 
+            (maybeNodes, tokenPos) <- manyTill' pNode (tagNamedOneOf ["else", "endif", "elif"])
+            let nodes = catMaybes maybeNodes
+            let token = fst tokenPos
+            let ifs' = ifs ++ [(e, nodes)]
+            case token of 
+                (PTag "endif" rest) -> do
+                    return $ Just $ Tag "if" $ TagFunc $ showIfElse ifs' [] 
+                (PTag "elif" rest) -> do
+                    e' <- parseIfExpr rest
+                    scan ifs' e'  
+                (PTag "else" rest) -> do
+                    nodes <- fmap catMaybes $ manyTill pNode (tagNamed "endif")
+                    return $ Just $ Tag "if" $ TagFunc $ showIfElse ifs' nodes
+                otherwise -> Parsec.Prim.unexpected "unexpected tag"
+        parseIfExpr s = do 
+            exprs <- runParseTagExpressions s
+            case exprs of 
+                [] -> Parsec.Prim.unexpected "empty if"
+                (x : []) -> return x
+                (x : xs) -> Parsec.Prim.unexpected $ show . head $ xs
 
-    nodes <- fmap catMaybes $ manyTill pNode (tagNamed "endif")
-    return $ Just $ Tag "if" (TagFunc (showIf expr nodes))
-
+manyTill' p1 p2 = scan
+    where scan = (Parsec.Prim.try p2') Parsec.Prim.<|> p1'
+          p1' = do x <- p1
+                   (xs, y) <- scan 
+                   return (x : xs, y)
+          p2' = do y <- p2
+                   return ([], y)
 
 exprToBool :: Expr -> RenderT Bool
 exprToBool expr = do
@@ -58,9 +87,10 @@ exprToBool expr = do
                 Nothing -> return False
                 Just val -> return $ coerceJSToBool val
 
-showIf :: Expr -> [Node] -> RenderT_
-showIf expr nodes = do
+showIfElse :: [(Expr, [Node])] -> [Node] -> RenderT_
+showIfElse [] right = mapM_ render right
+showIfElse ((expr, left) : xs) right = do
     succ <- exprToBool expr
     if succ 
-        then mapM_ render nodes
-        else return ()
+        then mapM_ render left
+        else showIfElse xs right

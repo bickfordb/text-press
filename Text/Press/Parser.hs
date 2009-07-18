@@ -98,6 +98,7 @@ var = token' $ toMaybe $ isVar . fst
 text = token' $ toMaybe $ isText . fst
 tag = token' $ toMaybe $ isTag . fst
 tagNamed name = token' $ toMaybe $ (isTagNamed name) . fst
+tagNamedOneOf name = token' $ toMaybe $ (isTagNamedOneOf name) . fst
 
 toMaybe f tokpos = if (f tokpos) then Just tokpos else Nothing
 
@@ -107,8 +108,10 @@ isVar otherwise = False
 isTag (PTag _ _) = True
 isTag otherwise = False
 
-isTagNamed aname (PTag name _) = aname == (strip name)
-isTagNamed aname otherwise = False
+isTagNamed aname tag = isTagNamedOneOf [aname] tag
+
+isTagNamedOneOf names (PTag name _) = name `elem` names
+isTagNamedOneOf names otherwise = False
 
 isText (PText _) = True
 isText otherwise = False

@@ -36,8 +36,9 @@ tests = [
     , testGroup "Renderer" [
         testCase "Render a var" $ rendersTo "{{x}}" "{\"x\":1}" "1"
         , testCase "Render a block" $ rendersTo "{% block x %}a{% endblock %}" "{}" "a"
-        , testCase "Render an if" $ rendersTo "{% if x %}a{% endif %}" "{}" ""
         , testCase "Render an if" $ rendersTo "{% if x %}a{% endif %}" "{\"x\":true}" "a"
+        , testCase "Render an if else" $ rendersTo "{% if x %}a{%else%}b{% endif %}" "{\"x\": false}" "b"
+        , testCase "Render an if elif else" $ rendersTo "{% if y %}a{% elif x %}b{%else%}c{% endif %}" "{\"x\": true}" "b"
         ]
     ]
 
