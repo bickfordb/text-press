@@ -1,6 +1,9 @@
 module Text.Press.Types where 
 
 import Control.Monad.State (StateT)
+import Control.Monad.Trans (lift)
+import Control.Monad.State (get)
+import Control.Monad.Writer.Lazy (WriterT)
 import Data.Map (Map, lookup, fromList)
 import qualified Text.Parsec.Prim as Prim
 import Text.Parsec.Pos (SourcePos)
@@ -12,9 +15,13 @@ data RenderState = RenderState {
     renderStateValues :: [JSValue]
 }
 
-type RenderT = StateT RenderState IO
+type RenderT a = WriterT [String] (StateT RenderState IO) a
+type RenderT_ = RenderT ()
 
-data TagFunc = TagFunc (RenderT String)
+getRenderState :: RenderT RenderState
+getRenderState = lift $ get
+
+data TagFunc = TagFunc RenderT_
 
 data Node = Var String
     | Tag TagName TagFunc
@@ -63,7 +70,7 @@ data Parser = Parser {
 } deriving (Show)
 
 class Render a where
-    render :: a -> RenderT String
+    render :: a -> RenderT_
 
 newParser = Parser (fromList []) [] (fromList [])
 

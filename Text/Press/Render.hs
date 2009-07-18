@@ -1,6 +1,8 @@
 module Text.Press.Render where
 
 import Control.Monad.State
+import Control.Monad.Writer.Lazy
+
 import Data.Map (Map, lookup, fromList, insert)
 import Data.Maybe (listToMaybe, catMaybes)
 import Prelude hiding (lookup)
@@ -11,11 +13,11 @@ import Text.JSON
 import Text.Press.Types
 
 instance Render Node where 
-    render (Text s) = return s 
+    render (Text s) = tell [s]
     render (Var var) = do
-        context <- get
+        context <- getRenderState
         case lookupVar var context of
-            Nothing -> return ""
+            Nothing -> tell [""]
             Just jsval -> renderJS jsval
     render (Tag _ f) = render f 
 
@@ -29,17 +31,18 @@ getf name (JSObject a) = get_field a name
 getf name otherwise = Nothing
 
 -- Show a block
+showBlock :: String -> RenderT_ 
 showBlock blockName = do
     templates <- templateStack
     let maybeNodes = lookupFirst blockName $ map tmplBlocks $ templates
     case maybeNodes of
-        Just nodes -> fmap (foldl (++) "") $ mapM render nodes
-        Nothing -> return ""
+        Just nodes -> mapM_ render nodes
+        Nothing -> tell [""]
 
 lookupFirst :: Ord k => k -> [Map k a] -> Maybe a
 lookupFirst name maps = listToMaybe . catMaybes $ map (lookup name) maps 
 
-getTemplate = fmap renderStateTemplate get
+getTemplate = fmap renderStateTemplate getRenderState
 
 templateStack = getTemplate >>= templateStack' 
     where
@@ -52,11 +55,10 @@ templateStack = getTemplate >>= templateStack'
                     return $ t : (template : templates)
                 Nothing -> liftIO $ error $ "expecting a template"
 
-renderJS JSNull = return ""
-renderJS (JSString x) = return $ fromJSString x
-renderJS other = return $ (showJSValue other) ""
+renderJS JSNull = tell [""]
+renderJS (JSString x) = tell [fromJSString x]
+renderJS other = tell [(showJSValue other) ""]
 
 doRender = do 
     bodyNodes <- fmap (tmplNodes . last) templateStack
-    st <- get
-    fmap (foldl (++) "") $ mapM render bodyNodes
+    mapM render bodyNodes

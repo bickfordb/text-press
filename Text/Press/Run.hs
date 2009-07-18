@@ -1,6 +1,7 @@
 module Text.Press.Run where
 
 import Control.Monad.State
+import Control.Monad.Writer.Lazy
 import Prelude hiding (lookup)
 
 import Data.Data (Data)
@@ -31,7 +32,7 @@ runJSONWithPath datas templateName = do
         renderStateTemplate = template,
         renderStateValues = datas
     }
-    liftIO $ evalStateT doRender st 
+    fmap (foldl (++) "") $ liftIO $ evalStateT (execWriterT doRender) st 
 
 runJSONWithBody :: [JSValue] -> String -> IO String
 runJSONWithBody jsvalues body = do 
@@ -47,7 +48,7 @@ runJSONWithTemplate' jsvalues template = do
         Just s -> addToTemplateCache s
         Nothing -> return ()
     parser <- get
-    liftIO $ evalStateT doRender $ RenderState {
+    fmap (foldl (++) "") $ liftIO $ evalStateT (execWriterT doRender) RenderState {
         renderStateParser = parser,
         renderStateTemplate = template,
         renderStateValues = jsvalues
