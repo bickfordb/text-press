@@ -1,9 +1,11 @@
 module Text.Press.Tags where
+import Text.JSON.Types
 
 import Data.Map (fromList, insert)
 import Data.Maybe (catMaybes)
 import qualified Text.Parsec.Prim as Parsec.Prim
 import Text.Parsec.Combinator (manyTill)
+import Control.Monad.Trans (lift, liftIO)
 
 import Text.Press.Parser
 import Text.Press.Render
@@ -30,6 +32,35 @@ blockTag name rest = do
 
 defaultTagTypes = (fromList [
     ("extends", TagType extendsTag), 
-    ("block", TagType blockTag)
+    ("block", TagType blockTag),
+    ("if", TagType ifTag)
     ])
 
+ifTag name rest = do
+    exprs <- runParseTagExpressions rest
+    expr <- case exprs of 
+        [] -> Parsec.Prim.unexpected "empty if"
+        (x : []) -> return x
+        (x : xs) -> Parsec.Prim.unexpected $ show . head $ xs
+
+    nodes <- fmap catMaybes $ manyTill pNode (tagNamed "endif")
+    return $ Just $ Tag "if" (TagFunc (showIf expr nodes))
+
+
+exprToBool :: Expr -> RenderT Bool
+exprToBool expr = do
+    case expr of 
+       ExprStr s -> return $ length s > 0 
+       ExprNum num -> return $ num > 0 
+       ExprVar var -> do
+            maybeVal <- lookupVarM var
+            case maybeVal of
+                Nothing -> return False
+                Just val -> return $ coerceJSToBool val
+
+showIf :: Expr -> [Node] -> RenderT_
+showIf expr nodes = do
+    succ <- exprToBool expr
+    if succ 
+        then mapM_ render nodes
+        else return ()

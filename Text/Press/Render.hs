@@ -24,6 +24,10 @@ instance Render Node where
 instance Render TagFunc where
     render (TagFunc f) = f 
 
+lookupVarM name = do 
+    st <- getRenderState 
+    return $ lookupVar name st
+
 lookupVar name (RenderState {renderStateValues = vals}) = 
     listToMaybe . catMaybes $ map (getf name) vals
 
@@ -62,3 +66,11 @@ renderJS other = tell [(showJSValue other) ""]
 doRender = do 
     bodyNodes <- fmap (tmplNodes . last) templateStack
     mapM render bodyNodes
+
+coerceJSToBool :: JSValue -> Bool
+coerceJSToBool JSNull = False 
+coerceJSToBool (JSBool bool) = bool
+coerceJSToBool (JSRational sign r) = (not sign) && (r > 0)
+coerceJSToBool (JSString x) = length (fromJSString x) > 0
+coerceJSToBool (JSArray vals) = length vals > 0
+coerceJSToBool (JSObject obj) = length (fromJSObject obj) > 0
