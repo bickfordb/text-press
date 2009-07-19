@@ -2,6 +2,7 @@ module Text.Press.Render where
 
 import Control.Monad.State
 import Control.Monad.Writer.Lazy
+import Control.Monad.Error.Class (throwError)
 
 import Data.Map (Map, lookup, fromList, insert)
 import Data.Maybe (listToMaybe, catMaybes)
@@ -12,17 +13,24 @@ import Text.JSON
 
 import Text.Press.Types
 
+emit s = tell [s]
+
 instance Render Node where 
-    render (Text s) = tell [s]
+    render (Text s) = emit s
     render (Var var) = do
         context <- getRenderState
         case lookupVar var context of
-            Nothing -> tell [""]
-            Just jsval -> renderJS jsval
+            Nothing -> emit ""
+            Just jsval -> render jsval
     render (Tag _ f) = render f 
 
 instance Render TagFunc where
     render (TagFunc f) = f 
+
+instance Render JSValue where 
+    render JSNull = emit ""
+    render (JSString x) = emit $ fromJSString x
+    render other = emit $ (showJSValue other) ""
 
 lookupVarM name = do 
     st <- getRenderState 
@@ -57,11 +65,7 @@ templateStack = getTemplate >>= templateStack'
                 Just template -> do
                     templates <- templateStack' template
                     return $ t : (template : templates)
-                Nothing -> liftIO $ error $ "expecting a template"
-
-renderJS JSNull = tell [""]
-renderJS (JSString x) = tell [fromJSString x]
-renderJS other = tell [(showJSValue other) ""]
+                Nothing -> throwError $ PressError $ "expecting a template in the cache named: " ++ (show name)
 
 doRender = do 
     bodyNodes <- fmap (tmplNodes . last) templateStack
