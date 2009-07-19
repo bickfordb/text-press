@@ -64,6 +64,11 @@ assertEq left right
     | left == right = return ()
     | otherwise = error $ "expecting " ++ (show left) ++ " == " ++ (show right)
 
+resultToString (Left err) = error $ show err
+resultToString (Right succ) = return $ foldl (++) "" succ
+
 rendersTo tmpl json expected = do 
     result <- renders tmpl json
-    assertEq expected result
+    s <- resultToString result
+    assertEq expected s
+

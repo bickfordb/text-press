@@ -1,11 +1,14 @@
 module Text.Press.Types where 
 
-import Control.Monad.State (StateT)
+import Control.Monad.Error (ErrorT, Error)
+import Control.Monad.Error.Class 
+import Control.Monad.State (StateT, get)
 import Control.Monad.Trans (lift)
-import Control.Monad.State (get)
 import Control.Monad.Writer.Lazy (WriterT)
 import Data.Map (Map, lookup, fromList)
+
 import qualified Text.Parsec.Prim as Prim
+import qualified Text.Parsec.Error
 import Text.Parsec.Pos (SourcePos)
 import Text.JSON (JSValue)
 
@@ -15,11 +18,21 @@ data RenderState = RenderState {
     renderStateValues :: [JSValue]
 }
 
-type RenderT a = WriterT [String] (StateT RenderState IO) a
+data PressError = PressError String
+    | ParseError Text.Parsec.Error.ParseError
+    | RenderError String
+    deriving (Show)
+
+instance Error PressError where
+    noMsg = PressError "Some rendering error"
+    strMsg s = PressError s
+
+type RenderT a = WriterT [String] (StateT RenderState (ErrorT PressError IO)) a
 type RenderT_ = RenderT ()
 
 getRenderState :: RenderT RenderState
-getRenderState = lift $ get
+--getRenderState = lift $ lift $ get
+getRenderState = get
 
 data TagFunc = TagFunc RenderT_
 
