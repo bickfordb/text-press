@@ -1,12 +1,9 @@
+all:
 
-all: press-test
-
-press-test: PressTest.hs Text/Press Text
-	ghc --make PressTest -o press-test
-
-test: press-test
-	./press-test
+test:
+	make -C tests test
 
 clean:
-	- rm -rf ./press-test
+	make -C tests clean
+
 
