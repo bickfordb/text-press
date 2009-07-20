@@ -39,6 +39,10 @@ tests = [
         , testCase "Render an if" $ rendersTo "{% if x %}a{% endif %}" "{\"x\":true}" "a"
         , testCase "Render an if else" $ rendersTo "{% if x %}a{%else%}b{% endif %}" "{\"x\": false}" "b"
         , testCase "Render an if elif else" $ rendersTo "{% if y %}a{% elif x %}b{%else%}c{% endif %}" "{\"x\": true}" "b"
+        , testCase "Render for" $ rendersTo "{% for i in x %}{{i}}{% endfor %}" "{\"x\": [2, 1]}" "21"
+        , testCase "Render for" $ rendersTo "{% for i in x %}{{i}}{% endfor %}" "{\"x\": []}" ""
+        , testCase "Render for" $ rendersTo "{% for i in x %}{{i}}{% endfor %}" "{}" ""
+        , testCase "Render for else" $ rendersTo "{% for i in x %}for{%else%}else{% endfor %}" "{}" "else"
         ]
     ]
 

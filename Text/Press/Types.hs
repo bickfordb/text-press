@@ -2,7 +2,7 @@ module Text.Press.Types where
 
 import Control.Monad.Error (ErrorT, Error)
 import Control.Monad.Error.Class 
-import Control.Monad.State (StateT, get)
+import Control.Monad.State (StateT, get, put)
 import Control.Monad.Trans (lift)
 import Control.Monad.Writer.Lazy (WriterT)
 import Data.Map (Map, lookup, fromList)
@@ -33,6 +33,9 @@ type RenderT_ = RenderT ()
 getRenderState :: RenderT RenderState
 --getRenderState = lift $ lift $ get
 getRenderState = get
+
+setRenderState :: RenderState -> RenderT ()
+setRenderState = put
 
 data TagFunc = TagFunc RenderT_
 
