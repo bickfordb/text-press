@@ -62,7 +62,7 @@ renders_ tmpl json = renders tmpl json >> return ()
 renders tmpl json = do
     case decodeStrict json of 
         Error e -> error . show $ e
-        Ok a -> runJSONWithBody [a] tmpl 
+        Ok a -> runJSValuesWithBody [a] tmpl 
 
 assertEq left right 
     | left == right = return ()

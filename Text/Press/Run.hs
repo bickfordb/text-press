@@ -9,7 +9,7 @@ import Prelude hiding (lookup)
 import Data.Data (Data)
 import Data.Map (insert, lookup)
 import Text.JSON.Generic (toJSON) 
-import Text.JSON (JSValue, decodeStrict)
+import Text.JSON (JSValue, decodeStrict, JSValue(..))
 
 import Text.Press.Types
 import Text.Press.Parser
@@ -19,17 +19,17 @@ import Text.Press.Tags
 type Result = Either PressError [String]
 
 runDataWithPath :: Data a => [a] -> String -> IO Result
-runDataWithPath datas templateName = runJSONWithPath jsonDatas templateName
+runDataWithPath datas templateName = runJSValuesWithPath jsonDatas templateName
     where jsonDatas = map toJSON datas
 
 runDataWithBody :: Data a => [a] -> String -> IO Result
-runDataWithBody datas body = runJSONWithBody jsonDatas body
+runDataWithBody datas body = runJSValuesWithBody jsonDatas body
     where jsonDatas = map toJSON datas
 
-runJSONWithPath datas templateName = runErrorT $ evalStateT (runJSONWithPathStTErrT datas templateName) defaultParser
+runJSValuesWithPath datas templateName = runErrorT $ evalStateT (runJSValuesWithPathStTErrT datas templateName) defaultParser
 
-runJSONWithPathStTErrT ::  [JSValue] -> String -> StateT Parser (ErrorT PressError IO) [String]
-runJSONWithPathStTErrT datas templateName = do
+runJSValuesWithPathStTErrT ::  [JSValue] -> String -> StateT Parser (ErrorT PressError IO) [String]
+runJSValuesWithPathStTErrT datas templateName = do
     addToTemplateCache templateName
     parser <- get
     template <- fmap head $ lookupTemplates templateName
@@ -40,17 +40,17 @@ runJSONWithPathStTErrT datas templateName = do
     }
     lift $ evalStateT (execWriterT doRender) st
 
-runJSONWithBody :: [JSValue] -> String -> IO Result
-runJSONWithBody jsvalues body = do 
+runJSValuesWithBody :: [JSValue] -> String -> IO Result
+runJSValuesWithBody jsvalues body = do 
     case parseString defaultParser body of
         Left parsecError -> return $ Left $ ParseError parsecError
-        Right template -> runErrorT $ evalStateT (runJSONWithTemplateStTErrT jsvalues template) defaultParser
+        Right template -> runErrorT $ evalStateT (runJSValuesWithTemplateStTErrT jsvalues template) defaultParser
 
-runJSONWithTemplate :: [JSValue] -> Template -> Parser -> IO Result
-runJSONWithTemplate jsvalues template parser = runErrorT $ evalStateT (runJSONWithTemplateStTErrT jsvalues template) parser
+runJSValuesWithTemplate :: [JSValue] -> Template -> Parser -> IO Result
+runJSValuesWithTemplate jsvalues template parser = runErrorT $ evalStateT (runJSValuesWithTemplateStTErrT jsvalues template) parser
 
-runJSONWithTemplateStTErrT :: [JSValue] -> Template -> StateT Parser (ErrorT PressError IO) [String]
-runJSONWithTemplateStTErrT jsvalues template = do
+runJSValuesWithTemplateStTErrT :: [JSValue] -> Template -> StateT Parser (ErrorT PressError IO) [String]
+runJSValuesWithTemplateStTErrT jsvalues template = do
     case tmplExtends template of 
         Just s -> addToTemplateCache s
         Nothing -> return ()
