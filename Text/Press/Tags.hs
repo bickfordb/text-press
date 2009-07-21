@@ -36,14 +36,21 @@ blockTag name rest = do
         tmpl {tmplBlocks = insert blockName nodes (tmplBlocks tmpl)})
     return $ Just $ Tag "block" $ TagFunc $ showBlock blockName
 
-
+-- This is mapping of all of the default tag types. 
 defaultTagTypes = (fromList [
     ("extends", TagType extendsTag),
     ("block", TagType blockTag),
     ("if", TagType ifTag),
-    ("for", TagType forTag)
+    ("for", TagType forTag),
+    ("comment", TagType commentTag)
     ])
 
+-- Comment Tag
+commentTag name rest = do 
+    manyTill pNode (tagNamed "endcomment")
+    return Nothing
+
+-- If tag
 ifTag name rest = do
         expr <- parseIfExpr rest
         scan [] expr
@@ -70,6 +77,7 @@ ifTag name rest = do
                 (x : []) -> return x
                 (x : xs) -> Parsec.Prim.unexpected $ show . head $ xs
 
+-- Version of manyTill that returns the terminating token
 manyTill' p1 p2 = scan
     where scan = (Parsec.Prim.try p2') Parsec.Prim.<|> p1'
           p1' = do x <- p1
@@ -78,6 +86,7 @@ manyTill' p1 p2 = scan
           p2' = do y <- p2
                    return ([], y)
 
+-- Evaluate an expression to a boolean suitable for an If clase
 exprToBool :: Expr -> RenderT Bool
 exprToBool expr = do
     case expr of
