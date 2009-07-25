@@ -7,6 +7,7 @@ import Control.Monad.Error.Class (throwError)
 import Data.Map (Map, lookup, fromList, insert)
 import Data.Maybe (listToMaybe, catMaybes)
 import Prelude hiding (lookup)
+import Data.List hiding (lookup)
 
 import Text.JSON.Types 
 import Text.JSON
@@ -39,8 +40,21 @@ lookupVarM name = do
 lookupVar name (RenderState {renderStateValues = vals}) = 
     listToMaybe . catMaybes $ map (getf name) vals
 
-getf name (JSObject a) = get_field a name 
-getf name otherwise = Nothing
+split :: String -> String -> [String]
+split tok splitme = unfoldr (sp1 tok) splitme
+    where sp1 _ "" = Nothing
+          sp1 t s = case find (t `isSuffixOf`) (inits s) of
+                      Nothing -> Just (s, "")
+                      Just p -> Just (take ((length p) - (length t)) p,
+                                      drop (length p) s)
+
+getf name a = getf' names (Just a)
+    where 
+        names = split "." name 
+        getf' [] y = y
+        getf' x Nothing = Nothing
+        getf' (x : xs) obj@(Just (JSObject a)) = getf' xs $ get_field a x
+        getf' x y = Nothing    
 
 -- Show a block
 showBlock :: String -> RenderT_ 

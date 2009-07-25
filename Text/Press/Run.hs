@@ -6,9 +6,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Writer.Lazy
 import Prelude hiding (lookup)
 
-import Data.Data (Data)
 import Data.Map (insert, lookup)
-import Text.JSON.Generic (toJSON) 
 import Text.JSON (JSValue, decodeStrict, JSValue(..))
 
 import Text.Press.Types
@@ -17,14 +15,6 @@ import Text.Press.Render
 import Text.Press.Tags
 
 type Result = Either PressError [String]
-
-runDataWithPath :: Data a => [a] -> String -> IO Result
-runDataWithPath datas templateName = runJSValuesWithPath jsonDatas templateName
-    where jsonDatas = map toJSON datas
-
-runDataWithBody :: Data a => [a] -> String -> IO Result
-runDataWithBody datas body = runJSValuesWithBody jsonDatas body
-    where jsonDatas = map toJSON datas
 
 runJSValuesWithPath datas templateName = runErrorT $ evalStateT (runJSValuesWithPathStTErrT datas templateName) defaultParser
 
