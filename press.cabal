@@ -12,5 +12,5 @@ Build-Type:          Simple
 Cabal-Version:       >= 1.2
 
 Library
-  Build-Depends:     base, containers, mtl, parsec >= 3.0.0, json
+  Build-Depends:     base <4, containers, mtl, parsec >= 3.0.0, json
   Exposed-Modules:   Text.Press.Render, Text.Press.Parser, Text.Press.Tags, Text.Press.Run, Text.Press.Types
