@@ -65,8 +65,6 @@ data TagType = TagType (TagName -> String -> NodeParser)
 data Expr = ExprStr String
     | ExprVar String
     | ExprNum Double
-    -- | ExprBinary Op Expr Expr 
-    -- | ExprUnary Op Expr
     deriving (Ord, Eq, Show)
 
 type ParserState = (Parser, Template)
